@@ -14,11 +14,14 @@ if __name__ == "__main__":
         print(data_base.folder)
         print(data_base.files)
         entry = Entry()
-        print(entry.save())
         print(entry.file)
-        entry1, oks = Entry.load(entry.file)
-        if oks:
-            print("ok")
-        print(entry1.save())
+        entry.print()
+        if entry.save():
+            print(entry.file)
+            entry1, oks = Entry.load(entry.file)
+            if oks:
+                print(entry1.file)
+                print("ok")
+                entry1.print()
 
     main()

@@ -2,7 +2,7 @@
 """
 
 import os
-from os.path import expanduser, isfile, exists
+from os.path import isfile, exists
 
 import path_config
 from entry import Entry
@@ -14,7 +14,9 @@ class Database:
 
     def __init__(self) -> None:
         self.contacts = {}
-        self.folder = expanduser(path_config.FOLDER_PATH)
+        self.folder = path_config.get_folder_path()
+        if not exists(self.folder):
+            os.makedirs(self.folder)
         if exists(self.folder):
             self.files = [
                 f for f in os.listdir(self.folder)

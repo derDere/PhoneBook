@@ -7,21 +7,36 @@
 
 import json
 from datetime import date
-from os.path import expanduser
 from typing import NamedTuple
+from os.path import exists
 import path_config
 
 
-class Address(NamedTuple):
+class Address():
     """Holds a comon address
     """
+    street:str = ""
+    number:str = ""
+    zip_code:str = ""
+    city:str = ""
+    state:str = ""
+    country:str = ""
 
-    street:str
-    number:str
-    zip_code:str
-    city:str
-    state:str
-    country:str
+    def __init__(
+        self,
+        street:str = "",
+        number:str = "",
+        zip_code:str = "",
+        city:str = "",
+        state:str = "",
+        country:str = ""
+    ) -> None:
+        self.street:str = street
+        self.number:str = number
+        self.zip_code:str = zip_code
+        self.city:str = city
+        self.state:str = state
+        self.country:str = country
 
     def to_dict(self) -> dict:
         """Returns the object as an dictionary
@@ -35,28 +50,50 @@ class Address(NamedTuple):
             "country": self.country
         }
 
-    def from_dict(self, dictionary):
+    @staticmethod
+    def from_dict(dictionary) -> None:
         """Reads data from a dict into the object
         """
-        self.street = dictionary["street"]
-        self.number = dictionary["number"]
-        self.zip_code = dictionary["zip_code"]
-        self.city = dictionary["city"]
-        self.state = dictionary["state"]
-        self.country = dictionary["country"]
+        addr = Address()
+        addr.street = dictionary["street"]
+        addr.number = dictionary["number"]
+        addr.zip_code = dictionary["zip_code"]
+        addr.city = dictionary["city"]
+        addr.state = dictionary["state"]
+        addr.country = dictionary["country"]
+
+        return addr
 
 
-class Personals(NamedTuple):
+class Personals():
     """Holds all personal informations
     """
 
-    first_name:str
-    last_name:str
-    title:str
-    nickname:str
-    organisation:str
-    birthday:date
-    male:bool
+    first_name:str = ""
+    last_name:str = ""
+    title:str = ""
+    nickname:str = ""
+    organisation:str = ""
+    birthday:date = date(1800,1,1)
+    male:bool = True
+
+    def __init__(
+        self,
+        first_name:str = "",
+        last_name:str = "",
+        title:str = "",
+        nickname:str = "",
+        organisation:str = "",
+        birthday:date = date(1800,1,1),
+        male:bool = True
+    ) -> None:
+        self.first_name:str = first_name
+        self.last_name:str = last_name
+        self.title:str = title
+        self.nickname:str = nickname
+        self.organisation:str = organisation
+        self.birthday:date = birthday
+        self.male:bool = male
 
     def to_dict(self) -> dict:
         """Returns the object as an dictionary
@@ -72,30 +109,48 @@ class Personals(NamedTuple):
                 self.birthday.month,
                 self.birthday.day
             ],
-            "male:": self.male
+            "male": self.male
         }
 
-    def from_dict(self, dictionary):
+    @staticmethod
+    def from_dict(dictionary) -> any:
         """Reads data from a dict into the object
         """
-        self.first_name = dictionary["first_name"]
-        self.last_name = dictionary["last_name"]
-        self.title = dictionary["title"]
-        self.nickname = dictionary["nickname"]
-        self.organisation = dictionary["organisation"]
-        self.birthday = date(dictionary["birthday"][0], dictionary["birthday"][1], dictionary["birthday"][2])
-        self.male = bool(dictionary["male"])
+        pers = Personals()
+        pers.first_name = dictionary["first_name"]
+        pers.last_name = dictionary["last_name"]
+        pers.title = dictionary["title"]
+        pers.nickname = dictionary["nickname"]
+        pers.organisation = dictionary["organisation"]
+        pers.birthday = date(dictionary["birthday"][0], dictionary["birthday"][1], dictionary["birthday"][2])
+        pers.male = bool(dictionary["male"])
+
+        return pers
 
 
-class Contact(NamedTuple):
+class Contact():
     """Hold contact informations
     """
 
-    phone:str
-    mobile:str
-    fax:str
-    email:str
-    address:Address
+    phone:str = ""
+    mobile:str = ""
+    fax:str = ""
+    email:str = ""
+    address:Address = Address()
+
+    def __init__(
+        self,
+        phone:str = "",
+        mobile:str = "",
+        fax:str = "",
+        email:str = "",
+        address:Address = Address()
+    ) -> None:
+        self.phone:str = phone
+        self.mobile:str = mobile
+        self.fax:str = fax
+        self.email:str = email
+        self.address:Address = address
 
     def to_dict(self) -> dict:
         """Returns the object as an dictionary
@@ -108,15 +163,19 @@ class Contact(NamedTuple):
             "address": self.address.to_dict()
         }
 
-    def from_dict(self, dictionary):
+    @staticmethod
+    def from_dict(dictionary) -> any:
         """Reads data from a dict into the object
         """
-        self.phone = dictionary["phone"]
-        self.mobile = dictionary["mobile"]
-        self.fax = dictionary["fax"]
-        self.email = dictionary["email"]
-        self.address = Address()
-        self.address.from_dict(dictionary["address"])
+        contact = Contact()
+        contact.phone = dictionary["phone"]
+        contact.mobile = dictionary["mobile"]
+        contact.fax = dictionary["fax"]
+        contact.email = dictionary["email"]
+        contact.address = Address()
+        contact.address.from_dict(dictionary["address"])
+
+        return contact
 
 
 class Entry:
@@ -124,7 +183,7 @@ class Entry:
     """
 
     def __init__(self) -> None:
-        self.file = expanduser(f"{path_config.FOLDER_PATH}/test{path_config.FILE_EXTENSINON}")
+        self.file = path_config.get_path("test")
 
         self.personals = Personals(
             "Max",
@@ -176,20 +235,48 @@ class Entry:
         Returns:
             tuple: The Entry object, A bool value returning True on a successfull load
         """
-        con = Entry()
-        con.file = file
-        return (con, True)
+        try:
+            if exists(file):
+                with open(file, "r", encoding="utf-8") as iofile:
+                    dictionary = json.load(iofile)
+                    entry = Entry()
+                    entry.file = file
+                    entry.personals = Personals.from_dict(dictionary["personals"])
+                    entry.private = Contact.from_dict(dictionary["private"])
+                    entry.work = Contact.from_dict(dictionary["work"])
+                return (entry, True)
+            else:
+                return (FileNotFoundError(file), False)
+        except Exception as ex:
+            print("Entry.load")
+            print(ex)
+            return (ex, False)
 
-    def save(self):
+    def save(self) -> bool:
         """Saves the Entry object to the file.
         """
-        jsonstr = json.dumps({
-            "personals": self.personals.to_dict(),
-            "private": self.private.to_dict(),
-            "work": self.work.to_dict()
-        })
+        try:
+            with open(self.file, "w+", encoding="utf-8") as file:
+                json.dump({
+                    "personals": self.personals.to_dict(),
+                    "private": self.private.to_dict(),
+                    "work": self.work.to_dict()
+                }, file)
+            return True
+        except Exception as ex:
+            print("Entry.save")
+            print(ex)
+            return False
 
-        return jsonstr
+    def print(self):
+        """Displays the entry.
+        """
+        string = json.dumps({
+                    "personals": self.personals.to_dict(),
+                    "private": self.private.to_dict(),
+                    "work": self.work.to_dict()
+                }, indent=2)
+        print(string)
 
 
 
