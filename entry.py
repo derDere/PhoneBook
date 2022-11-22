@@ -5,14 +5,118 @@
     - Address
 """
 
-from collections import namedtuple
+import json
 from datetime import date
 from os.path import expanduser
+from typing import NamedTuple
+import path_config
 
 
-Address = namedtuple("Address", "street:str number:str zip_code:str city:str state:str country:str")
-Personals = namedtuple("Personals", "first_name:str last_name:str title:str nickname:str organisation:str birthday:date male:bool")
-Contact = namedtuple("Contact", "phone:str mobile:str fax:str email:str address:Address")
+class Address(NamedTuple):
+    """Holds a comon address
+    """
+
+    street:str
+    number:str
+    zip_code:str
+    city:str
+    state:str
+    country:str
+
+    def to_dict(self) -> dict:
+        """Returns the object as an dictionary
+        """
+        return {
+            "street": self.street,
+            "number": self.number,
+            "zip_code": self.zip_code,
+            "city": self.city,
+            "state": self.state,
+            "country": self.country
+        }
+
+    def from_dict(self, dictionary):
+        """Reads data from a dict into the object
+        """
+        self.street = dictionary["street"]
+        self.number = dictionary["number"]
+        self.zip_code = dictionary["zip_code"]
+        self.city = dictionary["city"]
+        self.state = dictionary["state"]
+        self.country = dictionary["country"]
+
+
+class Personals(NamedTuple):
+    """Holds all personal informations
+    """
+
+    first_name:str
+    last_name:str
+    title:str
+    nickname:str
+    organisation:str
+    birthday:date
+    male:bool
+
+    def to_dict(self) -> dict:
+        """Returns the object as an dictionary
+        """
+        return {
+            "first_name": self.first_name,
+            "last_name": self.last_name,
+            "title": self.title,
+            "nickname": self.nickname,
+            "organisation": self.organisation,
+            "birthday": [
+                self.birthday.year,
+                self.birthday.month,
+                self.birthday.day
+            ],
+            "male:": self.male
+        }
+
+    def from_dict(self, dictionary):
+        """Reads data from a dict into the object
+        """
+        self.first_name = dictionary["first_name"]
+        self.last_name = dictionary["last_name"]
+        self.title = dictionary["title"]
+        self.nickname = dictionary["nickname"]
+        self.organisation = dictionary["organisation"]
+        self.birthday = date(dictionary["birthday"][0], dictionary["birthday"][1], dictionary["birthday"][2])
+        self.male = bool(dictionary["male"])
+
+
+class Contact(NamedTuple):
+    """Hold contact informations
+    """
+
+    phone:str
+    mobile:str
+    fax:str
+    email:str
+    address:Address
+
+    def to_dict(self) -> dict:
+        """Returns the object as an dictionary
+        """
+        return {
+            "phone": self.phone,
+            "mobile": self.mobile,
+            "fax": self.fax,
+            "email": self.email,
+            "address": self.address.to_dict()
+        }
+
+    def from_dict(self, dictionary):
+        """Reads data from a dict into the object
+        """
+        self.phone = dictionary["phone"]
+        self.mobile = dictionary["mobile"]
+        self.fax = dictionary["fax"]
+        self.email = dictionary["email"]
+        self.address = Address()
+        self.address.from_dict(dictionary["address"])
 
 
 class Entry:
@@ -20,7 +124,7 @@ class Entry:
     """
 
     def __init__(self) -> None:
-        self.file = expanduser("/mnt/e/test.vcf")
+        self.file = expanduser(f"{path_config.FOLDER_PATH}/test{path_config.FILE_EXTENSINON}")
 
         self.personals = Personals(
             "Max",
@@ -79,6 +183,34 @@ class Entry:
     def save(self):
         """Saves the Entry object to the file.
         """
+        jsonstr = json.dumps({
+            "personals": self.personals.to_dict(),
+            "private": self.private.to_dict(),
+            "work": self.work.to_dict()
+        })
+
+        return jsonstr
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+"""
+        # OLD VCF file saving
+        # Maybe another time
 
         #ERRORS
         #Save ist invalid
@@ -126,3 +258,4 @@ class Entry:
             f.write("NOTE:%s\n" % self.notes.replace("\n","\\n"))
 
             f.write("END:VCARD\n")
+"""

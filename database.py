@@ -3,6 +3,8 @@
 
 import os
 from os.path import expanduser, isfile, exists
+
+import path_config
 from entry import Entry
 
 
@@ -10,13 +12,17 @@ class Database:
     """This class represents one database manager object used to manage your phonebook
     """
 
-    FOLDER_PATH = "~/phonebook"
-
     def __init__(self) -> None:
         self.contacts = {}
-        self.folder = expanduser(Database.FOLDER_PATH)
+        self.folder = expanduser(path_config.FOLDER_PATH)
         if exists(self.folder):
-            self.files = [f for f in os.listdir(self.folder) if (isfile(f) and (f.lower()[-4:] == ".vcf"))]
+            self.files = [
+                f for f in os.listdir(self.folder)
+                if (
+                    isfile(f) and
+                    (f.lower()[-len(path_config.FILE_EXTENSINON):] == path_config.FILE_EXTENSINON)
+                )
+            ]
         else:
             self.files = []
         for file in self.files:
