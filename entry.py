@@ -215,8 +215,7 @@ class Entry:
                     entry.private = Contact.from_dict(dictionary["private"])
                     entry.work = Contact.from_dict(dictionary["work"])
                 return (entry, True)
-            else:
-                return (FileNotFoundError(file), False)
+            return (FileNotFoundError(file), False)
         except PermissionError as ex:
             print("Entry.load")
             print(ex)
