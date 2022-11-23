@@ -11,6 +11,8 @@ EMAIL_PATTERN = (
     r"[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$"
 )
 ABORT_INPUT_KEY_SEQUENCE = '\x01' # ^A
+EXIT_INPUT_KEY_SEQUENCE = '\x18' # ^E
+HELP_INPUT_KEY_SEQUENCE = '?'
 
 
 class InputAbortException(Exception):
@@ -18,6 +20,47 @@ class InputAbortException(Exception):
     """
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
+
+
+class InputExitException(Exception):
+    """Gets thrown once the user aborts the editing using ^A
+    """
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+
+
+class HelpOutput:
+    """Changes the default help output inside a with statement.
+    """
+
+    def __init__(self, new_help_out_method) -> None:
+        self.old_help_out = HelpOutput._help_out
+        self.new_help_out = new_help_out_method
+
+    def __enter__(self):
+        HelpOutput._help_out = self.new_help_out
+        return self
+
+    def __exit__(self, *args):
+        HelpOutput._help_out = self.old_help_out
+
+    @staticmethod
+    def _default_help_output():
+        print("^A = abort action; ^X = exit action; ? = display help")
+
+    @staticmethod
+    def _reset_help_out() -> None:
+        """Resets the help_out to the default output
+        """
+        HelpOutput.help_out = HelpOutput._default_help_output
+
+    _help_out = _default_help_output
+
+    @staticmethod
+    def print():
+        """Use this to exec the default Help Output function.
+        """
+        HelpOutput._help_out()
 
 
 def input_rex(
@@ -49,6 +92,10 @@ def input_rex(
         line = input(label)
         if line == ABORT_INPUT_KEY_SEQUENCE:
             raise InputAbortException()
+        if line == EXIT_INPUT_KEY_SEQUENCE:
+            raise InputExitException()
+        if line == HELP_INPUT_KEY_SEQUENCE:
+            HelpOutput.print()
         if line.strip() == "":
             return default
         if re.match(pattern, line) is None:
@@ -82,6 +129,10 @@ def input_date(
         line = input_rex(label, "Please use format: yyyy-mm-dd", DATE_PATTERN, "")
         if line == ABORT_INPUT_KEY_SEQUENCE:
             raise InputAbortException()
+        if line == EXIT_INPUT_KEY_SEQUENCE:
+            raise InputExitException()
+        if line == HELP_INPUT_KEY_SEQUENCE:
+            HelpOutput.print()
         if line.strip() == "":
             return default
         match = re.match(DATE_PATTERN, line)
@@ -126,6 +177,10 @@ def input_int(
         line = input(label)
         if line == ABORT_INPUT_KEY_SEQUENCE:
             raise InputAbortException()
+        if line == EXIT_INPUT_KEY_SEQUENCE:
+            raise InputExitException()
+        if line == HELP_INPUT_KEY_SEQUENCE:
+            HelpOutput.print()
         if line.strip() == "":
             return default
         if not line.isnumeric():
@@ -185,6 +240,10 @@ def input_bool(
         line = input(label)
         if line == ABORT_INPUT_KEY_SEQUENCE:
             raise InputAbortException()
+        if line == EXIT_INPUT_KEY_SEQUENCE:
+            raise InputExitException()
+        if line == HELP_INPUT_KEY_SEQUENCE:
+            HelpOutput.print()
         if line.strip() == "":
             return default
         if not line.lower() in [val_true.lower(), val_false.lower()]:

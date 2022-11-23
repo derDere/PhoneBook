@@ -5,10 +5,11 @@
     - Address
 """
 import json
+import os
 from datetime import date
-from os.path import exists
+from os.path import exists, isfile
 import path_config
-from input_lib import input_rex, input_date, input_bool, PHONE_NR_PATTERN, EMAIL_PATTERN, InputAbortException
+from input_lib import input_rex, input_date, input_bool, PHONE_NR_PATTERN, EMAIL_PATTERN, InputExitException
 
 
 class Address():
@@ -44,6 +45,24 @@ class Address():
             self.street = self.street + "aße"
         elif self.street.lower().strip().endswith("str."):
             self.street = self.street[:-1] + "aße"
+
+    def is_empty(self):
+        """Checks if the address has at least one filled attribute.
+
+        Returns:
+            bool: True if no attribute was filled.
+        """
+        check = [
+            self.street.strip() != "",
+            self.number.strip() != "",
+            self.zip_code.strip() != "",
+            self.city.strip() != "",
+            self.state.strip() != "",
+            self.country.strip() != ""
+        ]
+        if True in check:
+            return False
+        return True
 
     def to_dict(self) -> dict:
         """Returns the object as an dictionary
@@ -119,6 +138,25 @@ class Personals():
             "male": self.male
         }
 
+    def is_empty(self):
+        """Checks if the personal informations have at least one filled attribute.
+        (Ignores the Gerner attribute)
+
+        Returns:
+            bool: True if no attribute was filled.
+        """
+        check = [
+            self.first_name.strip() != "",
+            self.last_name.strip() != "",
+            self.title.strip() != "",
+            self.nickname.strip() != "",
+            self.organisation.strip() != "",
+            self.birthday != date(1800,1,1)
+        ]
+        if True in check:
+            return False
+        return True
+
     @staticmethod
     def from_dict(dictionary) -> any:
         """Reads data from a dict into the object
@@ -169,6 +207,23 @@ class Contact():
             "email": self.email,
             "address": self.address.to_dict()
         }
+
+    def is_empty(self):
+        """Checks if the contact has at least one filled attribute.
+
+        Returns:
+            bool: True if no attribute was filled.
+        """
+        check = [
+            self.mobile.strip() != "",
+            self.email.strip() != "",
+            self.phone.strip() != "",
+            self.fax.strip() != "",
+            not self.address.is_empty()
+        ]
+        if True in check:
+            return False
+        return True
 
     @staticmethod
     def from_dict(dictionary) -> any:
@@ -221,6 +276,12 @@ class Entry:
             print(ex)
             return (ex, False)
 
+    def delete_file(self):
+        """Deletes the entry file inside the file system.
+        """
+        if isfile(self.file):
+            os.remove(self.file)
+
     def save(self) -> bool:
         """Saves the Entry object to the file.
         """
@@ -238,14 +299,55 @@ class Entry:
             return False
 
     def print(self) -> None:
-        """Displays the entry.
+        """Displays the entry.┌└│
         """
-        string = json.dumps({
-                    "personals": self.personals.to_dict(),
-                    "private": self.private.to_dict(),
-                    "work": self.work.to_dict()
-                }, indent=2)
-        print(string)
+        print("┌────────────────────────────────────────────────────────────────────────")
+
+        display, icon = self.display()
+        print(f"│ {icon} {display} :")
+
+        if not self.personals.is_empty():
+            print("│")
+            if self.personals.organisation.strip() != "":
+                print("│      Orginasation: " + self.personals.organisation.strip())
+            if self.personals.birthday != date(1800,1,1):
+                print("│      Birthday:     " + str(self.personals.birthday).strip())
+            print("│")
+
+        if not self.private.is_empty():
+            print("│      Private:")
+            if self.private.email.strip() != "":
+                print("│         📧 E-Mail:   " + self.private.email.strip())
+            if self.private.phone.strip() != "":
+                print("│         📞 Phone:    " + self.private.phone.strip())
+            if self.private.mobile.strip() != "":
+                print("│         📱 Mobile:   " + self.private.mobile.strip())
+            if self.private.fax.strip() != "":
+                print("│         📠 Fax:      " + self.private.fax.strip())
+            if not self.private.address.is_empty():
+                print("│         🏠 Addresse: ")
+                print(f"│              {self.private.address.street.strip()} {self.private.address.number.strip()}")
+                print(f"│              {self.private.address.zip_code.strip()}, {self.private.address.city.strip()}")
+                if self.private.address.state.strip() != "" or self.private.address.country.strip() != "":
+                    print(f"│              {self.private.address.state.strip()}, {self.private.address.country.strip()}")
+
+        if not self.work.is_empty():
+            print("│      Work:")
+            if self.work.email.strip() != "":
+                print("│         📧 E-Mail:   " + self.work.email.strip())
+            if self.work.phone.strip() != "":
+                print("│         📞 Phone:    " + self.work.phone.strip())
+            if self.work.mobile.strip() != "":
+                print("│         📱 Mobile:   " + self.work.mobile.strip())
+            if self.work.fax.strip() != "":
+                print("│         📠 Fax:      " + self.work.fax.strip())
+            if not self.work.address.is_empty():
+                print("│         🏭 Addresse: ")
+                print(f"│              {self.work.address.street.strip()} {self.work.address.number.strip()}")
+                print(f"│              {self.work.address.zip_code.strip()}, {self.work.address.city.strip()}")
+                if self.work.address.state.strip() != "" or self.work.address.country.strip() != "":
+                    print(f"│              {self.work.address.state.strip()}, {self.work.address.country.strip()}")
+        print("└────────────────────────────────────────────────────────────────────────")
 
     def edit(self) -> None:
         """Edits the entry on a basic level.
@@ -260,7 +362,7 @@ class Entry:
                                                     PHONE_NR_PATTERN, self.private.mobile, show_default=(self.private.mobile.strip() != "")).strip()
             self.private.email = input_rex(" - E-Mail%s: ", "Please enter a valid E-Mail address!",
                                                     EMAIL_PATTERN, self.private.email, show_default=(self.private.email.strip() != "")).strip()
-        except InputAbortException:
+        except InputExitException:
             pass
 
     def edit_details(self) -> None:
@@ -323,23 +425,103 @@ class Entry:
                                                     show_default=(self.work.address.state.strip() != "")).strip()
             self.work.address.country = input_rex("    - Country%s: ", default=self.work.address.country,
                                                     show_default=(self.work.address.country.strip() != "")).strip()
-        except InputAbortException:
+        except InputExitException:
             pass
 
     def display(self) -> str:
         """Returns a displayable name
 
         Returns:
-            str: [[Nickname] FirstName LastName]
+            (str, str): [[Nickname] FirstName LastName] and a fitting icon
         """
+        icon = "👨"
+        if not self.personals.male:
+            icon = "👩"
         display = ""
         if self.personals.nickname.strip() != "":
             display = self.personals.nickname
             display += ", "
+        if self.personals.title.strip() != "":
+            display += self.personals.title
+            display += " "
         display += self.personals.first_name
         display += " "
         display += self.personals.last_name
-        return display
+        return (display, icon)
+
+    def get_contact(self) -> str:
+        """Return the first filled contact information prioritiesed in the following order:
+        private-mobile, private-phone, work-mobile, work-phone, private-email, work-email, private-fax, work-fax
+
+        Returns:
+            (str, str): the first found contact information of this entry and an icon fitting it
+        """
+        result = ""
+        icon = ""
+        if self.private.mobile.strip() != "":
+            icon = "📱"
+            result = self.private.mobile.strip()
+        elif self.private.phone.strip() != "":
+            icon = "📞"
+            result = self.private.phone.strip()
+        elif self.work.mobile.strip() != "":
+            icon = "📱"
+            result = self.work.mobile.strip()
+        elif self.work.phone.strip() != "":
+            icon = "📞"
+            result = self.work.phone.strip()
+        elif self.private.email.strip() != "":
+            icon = "📧"
+            result = self.private.email.strip()
+        elif self.work.email.strip() != "":
+            icon = "📧"
+            result = self.work.email.strip()
+        elif self.private.fax.strip() != "":
+            icon = "📠"
+            result = self.private.fax.strip()
+        elif self.work.fax.strip() != "":
+            icon = "📠"
+            result = self.work.fax.strip()
+        return (result, icon)
+
+    def is_empty(self):
+        """Checks if the entry has at least one filled attribute.
+           (Gender attribute is ignored!)
+
+        Returns:
+            bool: True if no attribute was filled.
+        """
+        check = [
+            self.personals.first_name.strip() != "",
+            self.personals.last_name.strip() != "",
+            self.private.mobile.strip() != "",
+            self.private.email.strip() != "",
+            self.personals.title.strip() != "",
+            self.personals.nickname.strip() != "",
+            self.personals.organisation.strip() != "",
+            self.personals.birthday != date(1800,1,1),
+            self.private.phone.strip() != "",
+            self.private.fax.strip() != "",
+            self.private.address.street.strip() != "",
+            self.private.address.number.strip() != "",
+            self.private.address.zip_code.strip() != "",
+            self.private.address.city.strip() != "",
+            self.private.address.state.strip() != "",
+            self.private.address.country.strip() != "",
+            self.work.email.strip() != "",
+            self.work.mobile.strip() != "",
+            self.work.phone.strip() != "",
+            self.work.fax.strip() != "",
+            self.work.address.street.strip() != "",
+            self.work.address.number.strip() != "",
+            self.work.address.zip_code.strip() != "",
+            self.work.address.city.strip() != "",
+            self.work.address.state.strip() != "",
+            self.work.address.country.strip() != ""
+        ]
+        if True in check:
+            return False
+        return True
 
     def match(self, search_str:str) -> bool:
         """Checks if the entry matches the search
