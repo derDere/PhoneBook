@@ -217,7 +217,7 @@ class Entry:
                 return (entry, True)
             else:
                 return (FileNotFoundError(file), False)
-        except Exception as ex:
+        except PermissionError as ex:
             print("Entry.load")
             print(ex)
             return (ex, False)
@@ -233,7 +233,7 @@ class Entry:
                     "work": self.work.to_dict()
                 }, file)
             return True
-        except Exception as ex:
+        except PermissionError as ex:
             print("Entry.save")
             print(ex)
             return False
