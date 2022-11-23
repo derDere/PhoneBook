@@ -6,7 +6,18 @@ from datetime import date
 
 DATE_PATTERN = r"^(\d{4,})[-. ]+(\d{1,2})[-. ]+(\d{1,2})$"
 PHONE_NR_PATTERN = r"^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$"
-EMAIL_PATTERN = r"^(([^<>()\[\]\\.,;:\s@\"]+(\.[^<>()\[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$"
+EMAIL_PATTERN = (
+    r"^(([^<>()\[\]\\.,;:\s@\"]+(\.[^<>()\[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\." +
+    r"[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$"
+)
+ABORT_INPUT_KEY_SEQUENCE = '\x01' # ^A
+
+
+class InputAbortException(Exception):
+    """Gets thrown once the user aborts the editing using ^A
+    """
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
 
 
 def input_rex(
@@ -36,6 +47,8 @@ def input_rex(
             label = label % ""
     while True:
         line = input(label)
+        if line == ABORT_INPUT_KEY_SEQUENCE:
+            raise InputAbortException()
         if line.strip() == "":
             return default
         if re.match(pattern, line) is None:
@@ -67,6 +80,8 @@ def input_date(
             label = label % ""
     while True:
         line = input_rex(label, "Please use format: yyyy-mm-dd", DATE_PATTERN, "")
+        if line == ABORT_INPUT_KEY_SEQUENCE:
+            raise InputAbortException()
         if line.strip() == "":
             return default
         match = re.match(DATE_PATTERN, line)
@@ -109,6 +124,8 @@ def input_int(
             label = label % ""
     while True:
         line = input(label)
+        if line == ABORT_INPUT_KEY_SEQUENCE:
+            raise InputAbortException()
         if line.strip() == "":
             return default
         if not line.isnumeric():
@@ -166,6 +183,8 @@ def input_bool(
         error = f"Please enter eigther '{val_true}' or '{val_false}'!"
     while True:
         line = input(label)
+        if line == ABORT_INPUT_KEY_SEQUENCE:
+            raise InputAbortException()
         if line.strip() == "":
             return default
         if not line.lower() in [val_true.lower(), val_false.lower()]:

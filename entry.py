@@ -8,7 +8,7 @@ import json
 from datetime import date
 from os.path import exists
 import path_config
-from input_lib import input_rex, input_date, input_bool, PHONE_NR_PATTERN, EMAIL_PATTERN
+from input_lib import input_rex, input_date, input_bool, PHONE_NR_PATTERN, EMAIL_PATTERN, InputAbortException
 
 
 class Address():
@@ -251,49 +251,81 @@ class Entry:
     def edit(self) -> None:
         """Edits the entry on a basic level.
         """
-        print("Personals:")
-        self.personals.first_name = input_rex(" - First name%s: ", default=self.personals.first_name, show_default=(self.personals.first_name.strip() != "")).strip()
-        self.personals.last_name = input_rex(" - Last name%s: ", default=self.personals.last_name, show_default=(self.personals.last_name.strip() != "")).strip()
-        self.private.mobile = input_rex(" - Mobile%s: ", "Please enter a valid mobile number!", PHONE_NR_PATTERN, self.private.mobile, show_default=(self.private.mobile.strip() != "")).strip()
-        self.private.email = input_rex(" - E-Mail%s: ", "Please enter a valid E-Mail address!", EMAIL_PATTERN, self.private.email, show_default=(self.private.email.strip() != "")).strip()
+        try:
+            print("Personals:")
+            self.personals.first_name = input_rex(" - First name%s: ", default=self.personals.first_name,
+                                                    show_default=(self.personals.first_name.strip() != "")).strip()
+            self.personals.last_name = input_rex(" - Last name%s: ", default=self.personals.last_name,
+                                                    show_default=(self.personals.last_name.strip() != "")).strip()
+            self.private.mobile = input_rex(" - Mobile%s: ", "Please enter a valid mobile number!",
+                                                    PHONE_NR_PATTERN, self.private.mobile, show_default=(self.private.mobile.strip() != "")).strip()
+            self.private.email = input_rex(" - E-Mail%s: ", "Please enter a valid E-Mail address!",
+                                                    EMAIL_PATTERN, self.private.email, show_default=(self.private.email.strip() != "")).strip()
+        except InputAbortException:
+            pass
 
     def edit_details(self) -> None:
         """Edits the entry details.
         """
-        print("Personals:")
-        self.personals.title = input_rex(" - Title%s: ", default=self.personals.title, show_default=(self.personals.title.strip() != "")).strip()
-        self.personals.nickname = input_rex(" - Nickname%s: ", default=self.personals.nickname, show_default=(self.personals.nickname.strip() != "")).strip()
-        self.personals.organisation = input_rex(" - Organisation%s: ", default=self.personals.organisation, show_default=(self.personals.organisation.strip() != "")).strip()
-        self.personals.birthday = input_date(" - Birthday%s: ", default=self.personals.birthday, show_default=(self.personals.birthday != date(1800,1,1)))
-        self.personals.male = input_bool(" - Gender%s: ", "m", "f", default=self.personals.male, show_default=True)
+        try:
+            print("Personals:")
+            self.personals.title = input_rex(" - Title%s: ", default=self.personals.title,
+                                                    show_default=(self.personals.title.strip() != "")).strip()
+            self.personals.nickname = input_rex(" - Nickname%s: ", default=self.personals.nickname,
+                                                    show_default=(self.personals.nickname.strip() != "")).strip()
+            self.personals.organisation = input_rex(" - Organisation%s: ", default=self.personals.organisation,
+                                                    show_default=(self.personals.organisation.strip() != "")).strip()
+            self.personals.birthday = input_date(" - Birthday%s: ", default=self.personals.birthday,
+                                                    show_default=(self.personals.birthday != date(1800,1,1)))
+            self.personals.male = input_bool(" - Gender%s: ", "m", "f", default=self.personals.male, show_default=True)
 
-        print("Private:")
-        self.private.phone = input_rex(" - Phone%s: ", "Please enter a valid phone number!", PHONE_NR_PATTERN, self.private.phone, show_default=(self.private.phone.strip() != "")).strip()
-        self.private.fax = input_rex(" - Fax%s: ", "Please enter a valid fax number!", PHONE_NR_PATTERN, self.private.fax, show_default=(self.private.fax.strip() != "")).strip()
+            print("Private:")
+            self.private.phone = input_rex(" - Phone%s: ", "Please enter a valid phone number!", PHONE_NR_PATTERN,
+                                                    self.private.phone, show_default=(self.private.phone.strip() != "")).strip()
+            self.private.fax = input_rex(" - Fax%s: ", "Please enter a valid fax number!", PHONE_NR_PATTERN,
+                                                    self.private.fax, show_default=(self.private.fax.strip() != "")).strip()
 
-        print(" - Address:")
-        self.private.address.street = input_rex("    - Street%s: ", default=self.private.address.street, show_default=(self.private.address.street.strip() != "")).strip()
-        self.private.address.fix_street()
-        self.private.address.number = input_rex("    - House Number%s: ", default=self.private.address.number, show_default=(self.private.address.number.strip() != "")).strip()
-        self.private.address.zip_code = input_rex("    - Zip Code%s: ", default=self.private.address.zip_code, show_default=(self.private.address.zip_code.strip() != "")).strip()
-        self.private.address.city = input_rex("    - City%s: ", default=self.private.address.city, show_default=(self.private.address.city.strip() != "")).strip()
-        self.private.address.state = input_rex("    - State%s: ", default=self.private.address.state, show_default=(self.private.address.state.strip() != "")).strip()
-        self.private.address.country = input_rex("    - Country%s: ", default=self.private.address.country, show_default=(self.private.address.country.strip() != "")).strip()
+            print(" - Address:")
+            self.private.address.street = input_rex("    - Street%s: ", default=self.private.address.street,
+                                                    show_default=(self.private.address.street.strip() != "")).strip()
+            self.private.address.fix_street()
+            self.private.address.number = input_rex("    - House Number%s: ", default=self.private.address.number,
+                                                    show_default=(self.private.address.number.strip() != "")).strip()
+            self.private.address.zip_code = input_rex("    - Zip Code%s: ", default=self.private.address.zip_code,
+                                                    show_default=(self.private.address.zip_code.strip() != "")).strip()
+            self.private.address.city = input_rex("    - City%s: ", default=self.private.address.city,
+                                                    show_default=(self.private.address.city.strip() != "")).strip()
+            self.private.address.state = input_rex("    - State%s: ", default=self.private.address.state,
+                                                    show_default=(self.private.address.state.strip() != "")).strip()
+            self.private.address.country = input_rex("    - Country%s: ", default=self.private.address.country,
+                                                    show_default=(self.private.address.country.strip() != "")).strip()
 
-        print("Work:")
-        self.work.email = input_rex(" - E-Mail%s: ", "Please enter a valid E-Mail address!", EMAIL_PATTERN, self.work.email, show_default=(self.work.email.strip() != "")).strip()
-        self.work.mobile = input_rex(" - Mobile%s: ", "Please enter a valid mobile number!", PHONE_NR_PATTERN, self.work.mobile, show_default=(self.work.mobile.strip() != "")).strip()
-        self.work.phone = input_rex(" - Phone%s: ", "Please enter a valid phone number!", PHONE_NR_PATTERN, self.work.phone, show_default=(self.work.phone.strip() != "")).strip()
-        self.work.fax = input_rex(" - Fax%s: ", "Please enter a valid fax number!", PHONE_NR_PATTERN, self.work.fax, show_default=(self.work.fax.strip() != "")).strip()
+            print("Work:")
+            self.work.email = input_rex(" - E-Mail%s: ", "Please enter a valid E-Mail address!", EMAIL_PATTERN, self.work.email,
+                                                    show_default=(self.work.email.strip() != "")).strip()
+            self.work.mobile = input_rex(" - Mobile%s: ", "Please enter a valid mobile number!", PHONE_NR_PATTERN, self.work.mobile,
+                                                    show_default=(self.work.mobile.strip() != "")).strip()
+            self.work.phone = input_rex(" - Phone%s: ", "Please enter a valid phone number!", PHONE_NR_PATTERN, self.work.phone,
+                                                    show_default=(self.work.phone.strip() != "")).strip()
+            self.work.fax = input_rex(" - Fax%s: ", "Please enter a valid fax number!", PHONE_NR_PATTERN, self.work.fax,
+                                                    show_default=(self.work.fax.strip() != "")).strip()
 
-        print(" - Address:")
-        self.work.address.street = input_rex("    - Street%s: ", default=self.work.address.street, show_default=(self.work.address.street.strip() != "")).strip()
-        self.work.address.fix_street()
-        self.work.address.number = input_rex("    - House Number%s: ", default=self.work.address.number, show_default=(self.work.address.number.strip() != "")).strip()
-        self.work.address.zip_code = input_rex("    - Zip Code%s: ", default=self.work.address.zip_code, show_default=(self.work.address.zip_code.strip() != "")).strip()
-        self.work.address.city = input_rex("    - City%s: ", default=self.work.address.city, show_default=(self.work.address.city.strip() != "")).strip()
-        self.work.address.state = input_rex("    - State%s: ", default=self.work.address.state, show_default=(self.work.address.state.strip() != "")).strip()
-        self.work.address.country = input_rex("    - Country%s: ", default=self.work.address.country, show_default=(self.work.address.country.strip() != "")).strip()
+            print(" - Address:")
+            self.work.address.street = input_rex("    - Street%s: ", default=self.work.address.street,
+                                                    show_default=(self.work.address.street.strip() != "")).strip()
+            self.work.address.fix_street()
+            self.work.address.number = input_rex("    - House Number%s: ", default=self.work.address.number,
+                                                    show_default=(self.work.address.number.strip() != "")).strip()
+            self.work.address.zip_code = input_rex("    - Zip Code%s: ", default=self.work.address.zip_code,
+                                                    show_default=(self.work.address.zip_code.strip() != "")).strip()
+            self.work.address.city = input_rex("    - City%s: ", default=self.work.address.city,
+                                                    show_default=(self.work.address.city.strip() != "")).strip()
+            self.work.address.state = input_rex("    - State%s: ", default=self.work.address.state,
+                                                    show_default=(self.work.address.state.strip() != "")).strip()
+            self.work.address.country = input_rex("    - Country%s: ", default=self.work.address.country,
+                                                    show_default=(self.work.address.country.strip() != "")).strip()
+        except InputAbortException:
+            pass
 
     def display(self) -> str:
         """Returns a displayable name
