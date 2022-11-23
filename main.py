@@ -14,6 +14,11 @@ if __name__ == "__main__":
         print(data_base.folder)
         print(data_base.files)
         entry = Entry()
+        entry.edit()
+        entry.edit_details()
+        print("#########################################")
+        entry.edit()
+        entry.edit_details()
         print(entry.file)
         entry.print()
         if entry.save():
@@ -23,5 +28,4 @@ if __name__ == "__main__":
                 print(entry1.file)
                 print("ok")
                 entry1.print()
-
     main()

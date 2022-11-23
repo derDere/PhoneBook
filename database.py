@@ -13,11 +13,12 @@ class Database:
     """
 
     def __init__(self) -> None:
-        self.contacts = {}
+        self.contacts = []
         self.folder = path_config.get_folder_path()
         if not exists(self.folder):
             os.makedirs(self.folder)
-        if exists(self.folder):
+            self.files = []
+        else:
             self.files = [
                 f for f in os.listdir(self.folder)
                 if (
@@ -25,9 +26,20 @@ class Database:
                     (f.lower()[-len(path_config.FILE_EXTENSINON):] == path_config.FILE_EXTENSINON)
                 )
             ]
-        else:
-            self.files = []
         for file in self.files:
-            contact, success = Entry.load(file)
+            entry, success = Entry.load(file)
             if success:
-                self.contacts[file] = contact
+                self.contacts.append(entry)
+
+    def search(self, search_str:str) -> list:
+        """Returns a list of entries matching the search string.
+
+        Args:
+            search_str (str): A string to search possible flags: "all:", "#all:", "org:", "add:", "#add:", "#:", "@:"
+
+        Returns:
+            list: Sorted list of entries
+        """
+        result = [entry for entry in self.contacts if entry.match(search_str)]
+        result.sort(key = lambda e: e.display())
+        return result
