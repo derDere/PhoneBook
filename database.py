@@ -85,7 +85,8 @@ class Database:
             new.personals.last_name = last_name
             try:
                 print("Please enter the data for the new entry ...")
-                print("Use ^A to to abort the entry creation or ^E to exit and save.")
+                print("Use ^A to to abort the entry creation or ^X to exit and save.")
+                print("Enter ^D to delete a fields content and enter ? to show this help again.")
                 new.edit()
                 if input_bool("Enter Details? (yN) ", "y", "n"):
                     new.edit_details()

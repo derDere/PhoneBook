@@ -5,7 +5,7 @@ import os
 import math
 from database import Database
 from entry import Entry
-from input_lib import EXIT_INPUT_KEY_SEQUENCE, HELP_INPUT_KEY_SEQUENCE, input_bool, input_choice
+from input_lib import EXIT_INPUT_KEY_SEQUENCE, HELP_INPUT_KEY_SEQUENCE, input_bool, input_choice, InputAbortException, InputExitException, HelpOutput
 
 
 def clear():
@@ -81,20 +81,41 @@ def entry_display(entry:Entry, database:Database) -> bool:
                     input("Press ENTER to continue ...")
 
         elif line in ["edit", "e"]:
-            clear()
-            entry.edit()
-            if input_bool("Edit Details? (yN) ", "y", "n"):
-                entry.edit_details()
-            entry.save()
+            try:
+                try:
+                    clear()
+                    with HelpOutput(
+                        lambda:
+                            print(
+                                "Use ^A to to abort the editing or ^X to exit and save.\n",
+                                "Enter ^D to delete a fields content or use ? to show this help again."
+                            )
+                    ):
+                        entry.edit()
+                        if input_bool("Edit Details? (yN) ", "y", "n"):
+                            entry.edit_details()
+                        if input_bool("Edit Notes? (yN) ", "y", "n"):
+                            entry.edit_note()
+                except InputExitException:
+                    pass
+                entry.save()
+                print("Entry changes saved.")
+            except InputAbortException:
+                entry.reload()
+                print("No changes where saved.")
+            input("Press ENTER to continue ...")
 
         elif line in ["delete", "d"]:
-            if input_bool("Are you sure you want to permanently delete this entry?! (delete|no) ", "delete", "no"):
-                display, _ = entry.display()
-                entry.delete_file()
-                database.update_deleted_entries()
-                print(f"Entry for \"{display}\" was deleted!")
-                input("Press ENTER to return to main menu ...")
-                return True
+            try:
+                if input_bool("Are you sure you want to permanently delete this entry?! (delete|no) ", "delete", "no"):
+                    display, _ = entry.display()
+                    entry.delete_file()
+                    database.update_deleted_entries()
+                    print(f"Entry for \"{display}\" was deleted!")
+                    input("Press ENTER to return to main menu ...")
+                    return True
+            except (InputAbortException, InputExitException):
+                pass
     return False
 
 
@@ -212,14 +233,14 @@ def display_help() -> None:
 def print_title():
     """Prints the applications title.
     """
-    print(r"   _____  _                      _                 _")
-    print(r"  |  __ \| |                    | |               | |")
-    print(r"  | |__) | |__   ___  _ __   ___| |__   ___   ___ | | __")
-    print(r"  |  ___/| '_ \ / _ \| '_ \ / _ \ '_ \ / _ \ / _ \| |/ /")
-    print(r"  | |    | | | | (_) | | | |  __/ |_) | (_) | (_) |   <")
-    print(r"  |_|    |_| |_|\___/|_| |_|\___|_.__/ \___/ \___/|_|\_\ ")
+    print(r"   _____  _                      _                 _          _______")
+    print(r"  |  __ \| |                    | |               | |       /` _____ `\;,")
+    print(r"  | |__) | |__   ___  _ __   ___| |__   ___   ___ | | __   /__(^---^)__\';,")
+    print(r"  |  ___/| '_ \ / _ \| '_ \ / _ \ '_ \ / _ \ / _ \| |/ /     /  :::  \   ,;")
+    print(r"  | |    | | | | (_) | | | |  __/ |_) | (_) | (_) |   <     |   :::   | ,;'")
+    print(r"  |_|    |_| |_|\___/|_| |_|\___|_.__/ \___/ \___/|_|\_\    '._______.'`")
     print()
-    print(r"────────────────────────────────────────────────────────────")
+    print(r"────────────────────────────────────────────────────────────────────────────")
 
 
 if __name__ == "__main__":

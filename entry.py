@@ -9,7 +9,7 @@ import os
 from datetime import date
 from os.path import exists, isfile
 import path_config
-from input_lib import input_rex, input_date, input_bool, PHONE_NR_PATTERN, EMAIL_PATTERN, InputExitException
+from input_lib import input_rex, input_date, input_bool, input_multiline, PHONE_NR_PATTERN, EMAIL_PATTERN, InputExitException, HelpOutput
 
 
 class Address():
@@ -248,7 +248,7 @@ class Entry:
         self.personals = Personals()
         self.private = Contact(address=Address())
         self.work = Contact(address=Address())
-        self.notes = ""
+        self.notes = []
 
     @staticmethod
     def load(file:str) -> tuple:
@@ -269,12 +269,28 @@ class Entry:
                     entry.personals = Personals.from_dict(dictionary["personals"])
                     entry.private = Contact.from_dict(dictionary["private"])
                     entry.work = Contact.from_dict(dictionary["work"])
+                    entry.notes = dictionary["notes"]
                 return (entry, True)
             return (FileNotFoundError(file), False)
         except PermissionError as ex:
             print("Entry.load")
             print(ex)
             return (ex, False)
+
+    def reload(self) -> None:
+        """Reloads the entry data from its file.
+        """
+        try:
+            if exists(self.file):
+                with open(self.file, "r", encoding="utf-8") as iofile:
+                    dictionary = json.load(iofile)
+                    self.personals = Personals.from_dict(dictionary["personals"])
+                    self.private = Contact.from_dict(dictionary["private"])
+                    self.work = Contact.from_dict(dictionary["work"])
+                    self.notes = dictionary["notes"]
+        except PermissionError as ex:
+            print("Entry.reload")
+            print(ex)
 
     def delete_file(self):
         """Deletes the entry file inside the file system.
@@ -290,7 +306,8 @@ class Entry:
                 json.dump({
                     "personals": self.personals.to_dict(),
                     "private": self.private.to_dict(),
-                    "work": self.work.to_dict()
+                    "work": self.work.to_dict(),
+                    "notes": self.notes
                 }, file)
             return True
         except PermissionError as ex:
@@ -301,52 +318,62 @@ class Entry:
     def print(self) -> None:
         """Displays the entry.┌└│
         """
-        print("┌────────────────────────────────────────────────────────────────────────")
-
         display, icon = self.display()
-        print(f"│ {icon} {display} :")
+
+        print( "┌────┬───────────────────────────────────────────────────────────────────")
+        print(f"│ {icon} │ {display}")
+        print( "├────┴───────────────────────────────────────────────────────────────────")
 
         if not self.personals.is_empty():
             print("│")
             if self.personals.organisation.strip() != "":
-                print("│      Orginasation: " + self.personals.organisation.strip())
+                print("│   Orginasation: " + self.personals.organisation.strip())
             if self.personals.birthday != date(1800,1,1):
-                print("│      Birthday:     " + str(self.personals.birthday).strip())
+                print("│   Birthday:     " + str(self.personals.birthday).strip())
             print("│")
 
         if not self.private.is_empty():
-            print("│      Private:")
+            print("│   Private:")
             if self.private.email.strip() != "":
-                print("│         📧 E-Mail:   " + self.private.email.strip())
+                print("│      📧 E-Mail:   " + self.private.email.strip())
             if self.private.phone.strip() != "":
-                print("│         📞 Phone:    " + self.private.phone.strip())
+                print("│      📞 Phone:    " + self.private.phone.strip())
             if self.private.mobile.strip() != "":
-                print("│         📱 Mobile:   " + self.private.mobile.strip())
+                print("│      📱 Mobile:   " + self.private.mobile.strip())
             if self.private.fax.strip() != "":
-                print("│         📠 Fax:      " + self.private.fax.strip())
+                print("│      📠 Fax:      " + self.private.fax.strip())
             if not self.private.address.is_empty():
-                print("│         🏠 Addresse: ")
-                print(f"│              {self.private.address.street.strip()} {self.private.address.number.strip()}")
-                print(f"│              {self.private.address.zip_code.strip()}, {self.private.address.city.strip()}")
+                print("│      🏠 Addresse: ")
+                print(f"│           {self.private.address.street.strip()} {self.private.address.number.strip()}")
+                print(f"│           {self.private.address.zip_code.strip()}, {self.private.address.city.strip()}")
                 if self.private.address.state.strip() != "" or self.private.address.country.strip() != "":
-                    print(f"│              {self.private.address.state.strip()}, {self.private.address.country.strip()}")
+                    print(f"│           {self.private.address.state.strip()}, {self.private.address.country.strip()}")
 
         if not self.work.is_empty():
-            print("│      Work:")
+            print("│   Work:")
             if self.work.email.strip() != "":
-                print("│         📧 E-Mail:   " + self.work.email.strip())
+                print("│      📧 E-Mail:   " + self.work.email.strip())
             if self.work.phone.strip() != "":
-                print("│         📞 Phone:    " + self.work.phone.strip())
+                print("│      📞 Phone:    " + self.work.phone.strip())
             if self.work.mobile.strip() != "":
-                print("│         📱 Mobile:   " + self.work.mobile.strip())
+                print("│      📱 Mobile:   " + self.work.mobile.strip())
             if self.work.fax.strip() != "":
-                print("│         📠 Fax:      " + self.work.fax.strip())
+                print("│      📠 Fax:      " + self.work.fax.strip())
             if not self.work.address.is_empty():
-                print("│         🏭 Addresse: ")
-                print(f"│              {self.work.address.street.strip()} {self.work.address.number.strip()}")
-                print(f"│              {self.work.address.zip_code.strip()}, {self.work.address.city.strip()}")
+                print("│      🏭 Addresse: ")
+                print(f"│           {self.work.address.street.strip()} {self.work.address.number.strip()}")
+                print(f"│           {self.work.address.zip_code.strip()}, {self.work.address.city.strip()}")
                 if self.work.address.state.strip() != "" or self.work.address.country.strip() != "":
-                    print(f"│              {self.work.address.state.strip()}, {self.work.address.country.strip()}")
+                    print(f"│           {self.work.address.state.strip()}, {self.work.address.country.strip()}")
+
+        if "".join(self.notes).strip().replace(" ", "") != "":
+            print("│   Notes:")
+            for line in self.notes:
+                if line.strip() == "":
+                    line = " -"
+                print("│      " + line.strip().replace("\n",""))
+
+        print("│")
         print("└────────────────────────────────────────────────────────────────────────")
 
     def edit(self) -> None:
@@ -364,6 +391,29 @@ class Entry:
                                                     EMAIL_PATTERN, self.private.email, show_default=(self.private.email.strip() != "")).strip()
         except InputExitException:
             pass
+
+    def edit_note(self) -> None:
+        """Edits the Contacts Note.
+        """
+        display, icon = self.display()
+        with HelpOutput(
+            lambda:
+                print(
+                    " To add new lines just enter some text. To change a line enter the\n" +
+                    " line number and the new text it should have. If you wish to delete\n" +
+                    " a line, enter the line number folowed by ^D\n" +
+                    " To finish enter ^X or enter ^A to abort and discard all changes.\n" +
+                    "─────────────────────────────────────────────────────────────────────────"
+                )
+            ):
+            self.notes = input_multiline(
+                icon + " " + display + " - Notes:\n─────────────────────────────────────────────────────────────────────────",
+                self.notes,
+                "─────────────────────────────────────────────────────────────────────────",
+                True,
+                " ", " │ ", "",
+                "                           ... empty ..."
+            )
 
     def edit_details(self) -> None:
         """Edits the entry details.

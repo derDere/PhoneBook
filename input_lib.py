@@ -1,6 +1,7 @@
 """This module provides methods to savely input certain types like int date bool and so on.
 """
 import re
+import os
 from datetime import date
 
 
@@ -12,6 +13,7 @@ EMAIL_PATTERN = (
 )
 ABORT_INPUT_KEY_SEQUENCE = '\x01' # ^A
 EXIT_INPUT_KEY_SEQUENCE = '\x18' # ^E
+DELETE_INPUT_KEY_SQEUNECE = '\x04' # ^D
 HELP_INPUT_KEY_SEQUENCE = '?'
 
 
@@ -46,7 +48,7 @@ class HelpOutput:
 
     @staticmethod
     def _default_help_output():
-        print("^A = abort action; ^X = exit action; ? = display help")
+        print("^A = abort action; ^X = exit action; ^D = delete content; ? = display help")
 
     @staticmethod
     def _reset_help_out() -> None:
@@ -69,7 +71,8 @@ def input_rex(
     pattern:str = ".*",
     default:str = "",
     show_default:bool = False,
-    default_display = lambda d: f" ({d})"
+    default_display = lambda d: f" ({d})",
+    empty_value=""
 ) -> str:
     """Returns a string that will be checked by an regular expression to make sure the user input is correct.
 
@@ -96,6 +99,8 @@ def input_rex(
             raise InputExitException()
         if line == HELP_INPUT_KEY_SEQUENCE:
             HelpOutput.print()
+        if line == DELETE_INPUT_KEY_SQEUNECE:
+            return empty_value
         if line.strip() == "":
             return default
         if re.match(pattern, line) is None:
@@ -108,7 +113,8 @@ def input_date(
     label:str = "",
     default:date = None,
     show_default:bool = False,
-    default_display = lambda d: f" ({d})"
+    default_display = lambda d: f" ({d})",
+    empty_value=date(1800,1,1)
 ) -> date:
     """Lets the user input a date using a certain pattern that getch checked by reg ex and returns a date
 
@@ -133,6 +139,8 @@ def input_date(
             raise InputExitException()
         if line == HELP_INPUT_KEY_SEQUENCE:
             HelpOutput.print()
+        if line == DELETE_INPUT_KEY_SQEUNECE:
+            return empty_value
         if line.strip() == "":
             return default
         match = re.match(DATE_PATTERN, line)
@@ -289,10 +297,81 @@ def input_choice(
             return options[list(options.keys())[i - 1]]
 
 
+def input_multiline(
+    title:str = "Edit multiline text:",
+    old_val:list[str] = None,
+    bottom:str = None,
+    clear_screen:bool = False,
+    line_start = "",
+    line_column = "|",
+    line_end = "",
+    empty_text = "<No lines added jet>"
+) -> list[str]:
+    """Inputs a multilined text.
+
+    Args:
+        title (str, optional): String displayed at the top of the input. Defaults to "Edit multiline text:".
+        old_val (list[str], optional): Start value that can be edited. Defaults to [].
+        bottom (str, optional): String displayed at the bottom of the input.
+                                Defaults to "Enter new lines or enter line number followed by text to edit the line.".
+        clear_screen (bool, optional): Set to True to clear the screen after every input. Defaults to False.
+
+    Returns:
+        list[str]: A list of lines entered by the user.
+    """
+    if old_val is None:
+        old_val = []
+    lines = [ line for line in old_val ]
+    show_help = True
+    while True:
+        if clear_screen:
+            os.system('cls' if os.name == 'nt' else 'clear')
+        print(title)
+        if len(lines) > 0:
+            line_len = len(str(len(lines)))
+            for index, line in enumerate(lines):
+                index += 1
+                print(line_start, end="")
+                print(" " * (line_len - len(str(index))), end="")
+                print(index, end=line_column)
+                print(line, end="")
+                print(line_end)
+        else:
+            print(empty_text)
+        if bottom is not None:
+            print(bottom)
+        if show_help:
+            HelpOutput.print()
+        show_help = False
+        line = input(": ").strip()
+        if line == ABORT_INPUT_KEY_SEQUENCE:
+            return old_val
+        if line == EXIT_INPUT_KEY_SEQUENCE:
+            return lines
+        if line == DELETE_INPUT_KEY_SQEUNECE:
+            lines = []
+        elif line == HELP_INPUT_KEY_SEQUENCE:
+            show_help = True
+        else:
+            sol = line.strip().split(" ")[0]
+            if sol.isnumeric():
+                index = int(sol) - 1
+                line = line[len(sol) + 1:]
+                if 0 <= index < len(lines):
+                    if line == DELETE_INPUT_KEY_SQEUNECE:
+                        del lines[index]
+                    else:
+                        lines[index] = line
+            elif line != DELETE_INPUT_KEY_SQEUNECE:
+                if len(lines) <= 0 or lines[-1].strip() != line.strip():
+                    lines.append(line)
+
+
 if __name__ == "__main__":
     def main():
         """main funktion to test the input_lib.
         """
+        list_in = input_multiline()
         str_in = input("String: ")
         int_in = input_int("Integer: ")
         bool_in = input_bool("Bool: ")
@@ -300,21 +379,24 @@ if __name__ == "__main__":
         choice_in = input_choice(
             "Options:",
             {
-                "Opt1": 1,
-                "Opt2": 2,
-                "Opt3": 3,
-                "Opt4": 4,
-                "Opt5": 5,
-                "Opt6": 6,
-                "Opt7": 7,
-                "Opt8": 8,
-                "Opt9": 9,
-                "Opt10": 10,
-                "Opt11": 11,
+                "Opt1":  "Option 1 was choosen!",
+                "Opt2":  "Option 2 was choosen!",
+                "Opt3":  "Option 3 was choosen!",
+                "Opt4":  "Option 4 was choosen!",
+                "Opt5":  "Option 5 was choosen!",
+                "Opt6":  "Option 6 was choosen!",
+                "Opt7":  "Option 7 was choosen!",
+                "Opt8":  "Option 8 was choosen!",
+                "Opt9":  "Option 9 was choosen!",
+                "Opt10": "Option 10 was choosen!",
+                "Opt11": "Option 11 was choosen!",
             })
         print(f"str_in:    {str_in}")
         print(f"int_in:    {int_in}")
         print(f"bool_in:   {bool_in}")
         print(f"date_in:   {date_in}")
         print(f"choice_in: {choice_in}")
+        print("---------")
+        print("\n".join(list_in))
+        print("---------")
     main()
