@@ -2,6 +2,7 @@
 """
 
 import os
+import random as rnd
 import datetime
 from os.path import isfile, exists, join
 
@@ -109,3 +110,30 @@ class Database:
         for entry in killables:
             if entry in self.contacts:
                 self.contacts.remove(entry)
+
+    def generate_random_entries(self):
+        """Generates random Entries based on a random-names.txt file.
+        For each line one entry will be created with a random phone number
+        and an email created from the two, space seperated, names using the start letter of the first name
+        a periot and the last name folowed by a random number @example.com
+        Genders will also be randomized.
+        """
+        try:
+            with open("random-names.txt", "r", encoding="utf-8") as names_file:
+                while True:
+                    line:str = names_file.readline().replace("\n", "").replace("\r", "").strip()
+                    if line == "":
+                        break
+                    new = Entry()
+                    names = line.split(" ")
+                    new.personals.first_name = names[0]
+                    new.personals.last_name = names[1]
+                    new.personals.birthday = datetime.date(rnd.randrange(1960, 2008), rnd.randrange(1, 13), rnd.randrange(1, 29))
+                    new.personals.male = rnd.choice([True, False])
+                    new.personals.title = rnd.choice(["","","","Dr.","Prof.","Ing.","",""])
+                    new.private.phone = "0" + str(rnd.randrange(1000000000, 1999999999))
+                    new.private.email = (names[0][0] + "." + names[1] + str(rnd.randrange(10, 9999)) + "@example.com").lower()
+                    new.save()
+                    self.contacts.append(new)
+        except (PermissionError, FileExistsError) as ex:
+            print(ex)

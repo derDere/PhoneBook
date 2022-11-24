@@ -206,7 +206,7 @@ def display_help() -> None:
     print("    + [[first name] [last name]]    To create a new entry.")
     print("                                    (first and last name are optional.)")
     print("    [any string]                    Search entries.")
-    print("    list                            List all entries.")
+    print("    *                               List all entries.")
 
 
 def print_title():
@@ -226,12 +226,15 @@ if __name__ == "__main__":
     def main() -> None:
         """main function of this programm
         """
+        clear()
         print_title()
         database = Database()
+        #database.generate_random_entries()
         print()
         display_help()
         print()
         first_run = True
+        show_help = False
 
         line = ""
         while line.lower() != "exit" and line != EXIT_INPUT_KEY_SEQUENCE:
@@ -239,8 +242,10 @@ if __name__ == "__main__":
                 clear()
                 print_title()
                 print()
-                display_help()
-                print()
+                if show_help:
+                    display_help()
+                    print()
+                show_help = False
 
             first_run = False
 
@@ -249,7 +254,7 @@ if __name__ == "__main__":
             if line.lower() == "exit" or line == EXIT_INPUT_KEY_SEQUENCE:
                 print("Exiting application ...")
 
-            elif line.startswith("+"):
+            elif line.strip().startswith("+"):
                 quic_first_name = ""
                 quic_last_name = ""
                 if len(line[1:].strip()) > 0:
@@ -261,20 +266,26 @@ if __name__ == "__main__":
                 database.add_new_entry(quic_first_name,quic_last_name)
 
             elif line.lower() == "help" or line == HELP_INPUT_KEY_SEQUENCE:
-                display_help()
+                show_help = True
 
-            elif line.lower() == "list":
-                for entry in database.contacts:
-                    print(entry.display())
+            elif line.strip() == "*":
+                if len(database.contacts) > 1:
+                    entry_list_view(database.contacts, database)
+                elif len(database.contacts) == 1:
+                    entry_display(database.contacts[0], database)
+                else:
+                    print("\nCurrently your phonebook is empty 🤷‍♂️ ...\n")
+                    input("Press ENTER to continue ...")
 
-            else:
+            elif line.strip() != "":
                 search_result = database.search(line)
                 if len(search_result) > 1:
                     entry_list_view(search_result, database)
                 elif len(search_result) == 1:
                     entry_display(search_result[0], database)
                 else:
-                    print("No results ...")
+                    print("\nNo results ...\n")
+                    input("Press ENTER to continue ...")
 
     ##############################################
     main()
