@@ -90,6 +90,8 @@ class Database:
                 new.edit()
                 if input_bool("Enter Details? (yN) ", "y", "n"):
                     new.edit_details()
+                if input_bool("Enter Notes? (yN) ", "y", "n"):
+                    new.edit_note()
             except InputExitException:
                 pass
             if not new.is_empty():

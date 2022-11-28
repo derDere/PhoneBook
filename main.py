@@ -195,22 +195,23 @@ def entry_list_view(entries:list[Entry], database:Database) -> None:
             show_help = True
         elif line == "b" or line == EXIT_INPUT_KEY_SEQUENCE:
             break
-        elif line[0] == "p":
-            for char in line:
-                if char == "p" and page > 0:
-                    page -= 1
-        elif line[0] == "n":
-            for char in line:
-                if char == "n" and page < (page_count - 1):
-                    page += 1
-        elif line[0] == "+":
-            for char in line:
-                if char == "+" and page_size < 200:
-                    page_size += 1
-        elif line[0] == "-":
-            for char in line:
-                if char == "-" and page_size > 5:
-                    page_size -= 1
+        if len(line) > 0:
+            if line[0] == "p":
+                for char in line:
+                    if char == "p" and page > 0:
+                        page -= 1
+            elif line[0] == "n":
+                for char in line:
+                    if char == "n" and page < (page_count - 1):
+                        page += 1
+            elif line[0] == "+":
+                for char in line:
+                    if char == "+" and page_size < 200:
+                        page_size += 1
+            elif line[0] == "-":
+                for char in line:
+                    if char == "-" and page_size > 5:
+                        page_size -= 1
         page_count = int(math.ceil(len(entries) / page_size))
         if page < 0:
             page = 0
@@ -218,16 +219,26 @@ def entry_list_view(entries:list[Entry], database:Database) -> None:
             page = page_count - 1
 
 
-def display_help() -> None:
+def display_help(adv = False) -> None:
     """Displays the controls for the main menu.
     """
     print("Available command:")
     print("    ^X or exit                      Exit application.")
     print("    ? or help                       Display help.")
+    print("    *                               List all entries.")
     print("    + [[first name] [last name]]    To create a new entry.")
     print("                                    (first and last name are optional.)")
-    print("    [any string]                    Search entries.")
-    print("    *                               List all entries.")
+    print("    [any string]                    Search entries. You can use prefixes.")
+    if adv:
+        print("                                    Available prefixes are:")
+        print("                                    - \"all:\"   search useing all text fields.")
+        print("                                    - \"#all:\"  search useing all fields including numbers.")
+        print("                                    - \"org:\"   search by the organisation.")
+        print("                                    - \"add:\"   search by address text fields.")
+        print("                                    - \"#add:\"  search by address including numbers")
+        print("                                    - \"@:\"     search by e-mail.")
+        print("                                    - \"#:\"     search by phone/mobile number.")
+        print("                                      (If no prefix is given search will only look by name)")
 
 
 def print_title():
@@ -264,7 +275,7 @@ if __name__ == "__main__":
                 print_title()
                 print()
                 if show_help:
-                    display_help()
+                    display_help(True)
                     print()
                 show_help = False
 
@@ -284,7 +295,9 @@ if __name__ == "__main__":
                         quic_first_name = parts[0]
                     if len(parts) >= 2:
                         quic_last_name = parts[1]
-                database.add_new_entry(quic_first_name,quic_last_name)
+                new_entry = database.add_new_entry(quic_first_name,quic_last_name)
+                if new_entry is not None:
+                    entry_display(new_entry, database)
 
             elif line.lower() == "help" or line == HELP_INPUT_KEY_SEQUENCE:
                 show_help = True
