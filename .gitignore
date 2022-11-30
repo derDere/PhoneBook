@@ -127,3 +127,12 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Generated Documentation
+documentation/
+html/
+pdf.md
+pdf.pdf
+documentation.pdf
+documentation.md
+missfont.log
